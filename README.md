@@ -1,5 +1,5 @@
 # System-Design Guide
-> Created by: @vedbulsara04
+> Created by: [@vedbulsara04](https://github.com/vedbulsara04)
 ---
 
 ## *Introduction*
