@@ -108,3 +108,23 @@ Throughput is the number of operations a system can handle per unit of time, oft
 - ***Batching***: process multiple operations together.
 - ***Concurrency***: handle many requests in parallel (threads, async, event loops)
 - ***Efficient data formats***: Protocol Buffers over JSON reduces serialization cost.
+
+---
+
+## *Availability & Consistency*
+
+### ` Availability in System-Design `
+
+Availability means every request receives a response, not necessarily the most up-to date, but the system stays operational and never returns an error due to node failure.
+
+**How to achieve high availability**:
+
+- ***Replication***: duplicate data across multiple nodes so no single node is a point of failure.
+- ***Failover***: automatically switch to a standby node when the primary fails.
+- ***Health checks & Load Balancers***: route traffic away from unhealthy or overloaded nodes.
+- ***Redundancy at every layer***: servers, databases, network links, data centers.
+- ***Graceful Degradation***: return partial or cached data rather than erroring out.
+
+### ` Consistency in System-Design `
+
+Consistency means every read reflects the most recent write; all nodes in the system see the same data at the same time.
