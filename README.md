@@ -10,7 +10,7 @@ System design is the process of planning and structuring the architecture of a s
 It defines how different components will work together to achieve the desired function efficiently.
 
 ### ` How to approach System Design `
-<img src="https://markdownviewer.pages.dev/api/image/xs21rbsOYSju_Qbv7EKn6fXX" width="270">
+<img src="media/system_design_approach.png" width="270">
 
 ---
 
@@ -97,3 +97,14 @@ Latency is the time it takes to complete a single operation, from request to res
 - ***Geographically distributed nodes***: bring data closer to users.
 - ***Async I/O or non-blocking operations***: don't wait idle; do other work.
 - ***Reduce hops***: fewer services in the call chain means less accumulated delay.
+
+### ` Throughput in System-Design `
+
+Throughput is the number of operations a system can handle per unit of time, often measured in requests per second or QPS.
+
+**How to increase throughput**:
+- ***Horizontal Scaling***: add more machines to share the load.
+- ***Load Balancing***: distribute requests evenly across instances.
+- ***Batching***: process multiple operations together.
+- ***Concurrency***: handle many requests in parallel (threads, async, event loops)
+- ***Efficient data formats***: Protocol Buffers over JSON reduces serialization cost.
