@@ -127,4 +127,30 @@ Availability means every request receives a response, not necessarily the most u
 
 ### ` Consistency in System-Design `
 
-Consistency means every read reflects the most recent write; all nodes in the system see the same data at the same time.
+Consistency means every read reflects the most recent write; all nodes in the system see the same data at the same time
+
+### ` The CAP Theorem `
+
+Proposed by Eric Brewer, it states that distributed systems can guarantee only 2 of these 3 properties simultaneously:
+
+- ***Consistency***: every node returns the same, most recent data.
+- ***Availability***: every request gets a response.
+- ***Partition Tolerance***: system keeps working even if nodes cant talk to each other.
+
+#### **CP: Consistency + Partition Tolerance**
+
+"I'd rather return an error than return stale data"
+- When a partition occurs, the system refuses to respond until it can guarantee the data is consistent.
+- Nodes may reject reads/writes to avoid serving outdated state.
+- Prioritizes correctness over uptime.
+
+> Usage: Bank balances, Inventory counts, etc; anywhere wrong data causes real damage.
+
+#### **AP: Availability + Partition Tolerance**
+
+"I'd rather return something than return nothing"
+- When a partition occurs, the system keeps responding even if the nodes have stale data.
+- Nodes diverge temporarily and reconcile later (eventual consistency)
+- Prioritizes uptime over correctness.
+
+> Usage: Social feeds, product catalogue, user profile, view counts, etc; anywhere a slightly stale response is acceptable.
