@@ -154,3 +154,31 @@ Proposed by Eric Brewer, it states that distributed systems can guarantee only 2
 - Prioritizes uptime over correctness.
 
 > Usage: Social feeds, product catalogue, user profile, view counts, etc; anywhere a slightly stale response is acceptable.
+
+### ` Consistency Patterns `
+
+It defines what value a read returns after a write, across nodes that may be geographically distributed, partially failed or temporarily partitioned.
+
+**The Core Question**
+
+After a client writes data to a system:
+> "What will the next read return and from which node ?
+- The 3 patterns answer this differently.
+
+#### **1. Weak Consistency**
+
+After a write, the system makes no guarantee that subsequent reads will reflect it. The write propogates on a best-effor basis: some nodes may see it immediately, others never and the order of propagation is undefined.
+
+> Usage: Real-time, latency-sensitive data where loss or staleness is acceptable.
+
+#### **2. Eventual Consistency**
+
+After a write, a system guarantees that all replicas will converge into the same state, provided no new conflicting writes occur. There is no bound on *when* convergence happens (in practice, typically milliseconds to seconds under normal operation).
+
+> Usage: Write throughput and availability are primary constraints; slight staleness on reads is acceptable to the application.
+
+#### **3. Strong Consistency**
+
+After a write completes, every subsequent read from any node in the system reflects that write, regardless of which replica handles that read. The system behaves as if there is a single copy of the data.
+
+> Usage: Incorrect or stale data causes real, unrecoverable harm. ( financial transactions, inventory deductions, distributed locks, authentication tokens, configuration state )
