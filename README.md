@@ -167,7 +167,7 @@ After a client writes data to a system:
 
 #### **1. Weak Consistency**
 
-After a write, the system makes no guarantee that subsequent reads will reflect it. The write propogates on a best-effor basis: some nodes may see it immediately, others never and the order of propagation is undefined.
+After a write, the system makes no guarantee that subsequent reads will reflect it. The write propogates on a best-effort basis: some nodes may see it immediately, others never and the order of propagation is undefined.
 
 > Usage: Real-time, latency-sensitive data where loss or staleness is acceptable.
 
@@ -182,3 +182,51 @@ After a write, a system guarantees that all replicas will converge into the same
 After a write completes, every subsequent read from any node in the system reflects that write, regardless of which replica handles that read. The system behaves as if there is a single copy of the data.
 
 > Usage: Incorrect or stale data causes real, unrecoverable harm. ( financial transactions, inventory deductions, distributed locks, authentication tokens, configuration state )
+
+### ` Availability Patterns `
+
+They are architectural strategies to ensure a system remains operational under node failure. The 2 primary mechanisms are: Fail-Over and Replication.
+
+1. ***Fail-Over***: It is the mechanism of automatically switching traffic to a standby node when the active node fails. A heartbeat signal is continuously sent between active and passive nodes to detect failure.
+   
+   - **Active-Passive Fail-Over**: One active node handles all traffic. The second node (passive/standby) sits idle, receiving replicated state but serving no requests.
+  
+      * *On Failure*:
+         - Heartbeat from active node stops.
+         - Passive node detects failure, promotes itself to active.
+         - Traffic is rerouted to newly promoted node.
+
+   - **Active-Active Fail-Over**: Both nodes are active simultaneously, handling traffic in parallel. A load balancer distributes requests across both.
+      
+      * *On Failure*:
+         - Load balancer detects the failed node via health checks.
+         - All traffic is rerouted to the surviving node.
+         - No promotion required, the other node is already active.
+
+2. ***Replication***: It is the mechanism of copying data across multiple nodes to ensure durability and read scalability.
+   
+   **There are two primary toplogies:**
+
+   - **Master-Slave Replication**: One node (master) handles all writes. Changes are replicated asynchronously (or synchronously) to one or more slave nodes, which serve reads.
+  
+      ```
+      Client Writes -> Master -> Replicates -> Slave 1 & Slave 2
+
+      Client Reads -> Slave 1 / Slave 2
+      ```
+
+      * *On Master Failure*: 
+         - A slave is manually or automatically promoted to master.
+         - Until promotion completes, writes are unavailable.
+   
+   - **Master-Master Replication**: Both nodes (masters) accept reads and writes simultaneously. Changes made on either node are replicated to the other.
+   
+      ```
+      Client Writes -> Master 1 <-> Replicates <-> Master 2 <- Client Writes
+
+      Client Reads -> Master 1 / Master 2
+      ```
+
+      * *On Failure*: 
+         - Surviving master continues serving both reads and writes uninterrupted.
+         - No promotion needed.
