@@ -187,7 +187,9 @@ After a write completes, every subsequent read from any node in the system refle
 
 They are architectural strategies to ensure a system remains operational under node failure. The 2 primary mechanisms are: Fail-Over and Replication.
 
-1. ***Fail-Over***: It is the mechanism of automatically switching traffic to a standby node when the active node fails. A heartbeat signal is continuously sent between active and passive nodes to detect failure.
+#### **1. Fail-Over**: 
+
+It is the mechanism of automatically switching traffic to a standby node when the active node fails. A heartbeat signal is continuously sent between active and passive nodes to detect failure.
    
    - **Active-Passive Fail-Over**: One active node handles all traffic. The second node (passive/standby) sits idle, receiving replicated state but serving no requests.
   
@@ -203,7 +205,9 @@ They are architectural strategies to ensure a system remains operational under n
          - All traffic is rerouted to the surviving node.
          - No promotion required, the other node is already active.
 
-2. ***Replication***: It is the mechanism of copying data across multiple nodes to ensure durability and read scalability.
+#### **2. Replication**: 
+
+It is the mechanism of copying data across multiple nodes to ensure durability and read scalability.
    
    **There are two primary toplogies:**
 
@@ -230,3 +234,75 @@ They are architectural strategies to ensure a system remains operational under n
       * *On Failure*: 
          - Surviving master continues serving both reads and writes uninterrupted.
          - No promotion needed.
+
+### ` Availability in Numbers ` 
+
+Availability is referred as the percentage of time a system is operational over a given period. Commonly referred to as "nines", each additional nine reduces allowable downtime by ~10x.
+
+#### **Availability Tiers**
+
+| Availability | Nines | Downtime / Year | Downtime / Month | Downtime / Week |
+| --- | --- | --- | --- | --- |
+| 90% | One 9 | 36.5 days | 72 hours | 16.8 hours |
+| 99% | Two 9s | 3.65 days | 7.2 hours | 1.68 hours |
+| 99.9% | Three 9s | 8.76 hours | 43.8 minutes | 10.1 minutes |
+| 99.99% | Four 9s | 52.6 minutes | 4.38 minutes | 1.01 minutes |
+| 99.999% | Five 9s | 5.26 minutes | 26.3 seconds | 6.05 seconds |
+| 99.9999% | Six 9s | 31.5 seconds | 2.63 seconds | 0.6 seconds |
+
+#### **Industry standard SLA targets** 
+
+- Most web services target Three to Four 9s.
+- Telecom and financial systems target Five 9s.
+- Six 9s is rare and extremely expensive to engineer.
+
+#### **Availability in Sequence v/s Parallel**
+
+When a request passes through multiple components, the topology of those components determines the overall system availability.
+
+- ***Components in Sequence***: A request must pass through all components to succeed. If any one fails, the entire request fails.
+
+   ```
+   Request -> [Component A] -> [Component B] -> [Component C] -> Response
+   ```
+
+   Formula:
+   ```
+   Total_Availability = Availability_A x Availability_B x Availability_C
+   ```
+   Example:
+   ```
+   A = 99.9%,  B = 99.9%,  C = 99.9%
+
+   Total_Availability = 0.999 × 0.999 × 0.999 = 0.997 = 99.7%
+   ```
+
+- ***Components in Parallel***: Multiple instances of a component run simultaneously. A request succeeds if at least one instance is available. All must fail simultaneously for the system to go down.
+
+   ```
+                ┌─ [Component A1] ─┐
+   Request  --> ├─ [Component A2] ─┼ --> Response
+                └─ [Component A3] ─┘
+   ```
+
+   Formula:
+   ```
+   Total_Availability = 1 - (1 - Availability_A)^n
+
+   Where 'n' = number of parallel instances
+   ```
+
+   Example:
+   ```
+   A = 99.9%,  n = 2 parallel instances
+
+   Total_Availability = 1 - (1 - 0.999)² = 1 - (0.001)² = 1 - 0.000001 = 99.9999%   
+   ```
+
+- ***Practical Implication***:
+
+   A system's critical path, the sequential chain of components a request must traverse, is the primary availability bottleneck. The standard architectural respones is:
+
+   - **Minimize** the no. of sequential dependencies in the critical path.
+   - **Replicate** each component in the critical path in parallel (redundancy).
+   - **Isolate failures**: a failing non-critical component should not bring down the critical path.
