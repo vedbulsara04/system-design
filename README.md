@@ -1,5 +1,7 @@
 # System-Design Guide
-> Created by: @vedbulsara04
+
+> Created by: [@vedbulsara04](https://github.com/vedbulsara04)
+
 ---
 
 ## *Introduction*
@@ -427,7 +429,7 @@ example.com.   300   IN   A   93.184.216.34
                 └──  TTL = 300 seconds (5 minutes)
 ```
 
-#### **TTL tradeoffs**:
+#### **TTL tradeoffs**
 
 | TTL | Effect |
 | --- | --- |
@@ -456,3 +458,90 @@ DNS is a canonical example of an eventually consistent system:
 - Propagation time is bounded by TTL - resolvers hold cached records until TTL expires.
 - During propagation, different clients may resolve the same domain to different IPs.
 - No global synchronization - by design, for scalability.
+
+
+## **Content Delivery Network (CDN)**
+
+A CDN is a globally distributed network of edge servers (Points of Presence - PoPs) that cache and serve content from locations geographically closer to the end user. The primary purpose is to reduce latency by eliminating the round-trip to the origin server for cacheable content, and to reduce load on the origin infrastructure.
+
+<img src="media/cdn.png">
+
+> source: [Cloudflare - How does a CDN work?](https://www.cloudflare.com/learning/cdn/what-is-a-cdn/#how-does-a-cdn-work)
+
+
+---
+
+### ` Core Mechanism `
+
+- **Without CDN:**
+      
+  ```
+  User (Mumbai) -> [Internet] -> Origin Server (US-East) -> Response travels back
+                                 Round trip: ~200ms
+  ```
+
+- **With CDN:**
+
+  ```
+  User (Mumbai) -> CDN Edge (Mumbai PoP) -> Response served locally
+                   Cache hit: ~5-10ms
+  ```
+
+On a cache miss, the edge node fetches from origin, caches the response and serves it - subsequent requests for the same content are served from cache until TTL expires.
+
+### ` What CDNs Serve `
+
+- **Static assets** - HTML, CSS, JavaScript, images, fonts.
+- **Video and audio streams** - adaptive bitrate streaming. (HLS, DASH)
+- **Software downloads** - binaries, packages.
+- **API responses** - for cacheable, non-personalized endpoints.
+- **Dynamic content** - via edge computing. (Cloudflare Workers, Lambda@Edge)
+
+### ` Pull CDNs `
+
+In a pull CDN, content is fetched from the origin server on demand - the CDN pulls content lazily when a user first requests it. No pre-population of the cache is required.
+
+**Mechanism**: 
+   
+1. User requests asset -> hits CDN edge node.
+   
+2. Edge node has no cached copy (cache miss).
+   
+3. Edge node fetches asset from origin server.
+
+4. Asset is cached at edge with configured TTL.
+
+5. Edge serves asset to user.
+
+6. All subsequent requests -> cache hit -> served from edge until TTL expires.
+
+**Best suited for**: 
+
+- Large content libraries where pre-loading all assets is impractical.
+- Frequently updated content where TTL controls freshness.
+- Standard web assets - images, JS, CSS.
+
+**Examples**: Cloudflare (defualt mode), AWS CloudFront, Fastly.
+
+### ` Push CDNs `
+
+In a Push CDN, content is explicitly uploaded to the CDN by the operator before any user requests it. The CDN does not fetch from origin - it serves only what has been pushed.
+
+**Mechanism**:
+
+1. Operator uploads assets to CDN storage. (via API or deployment pipeline)
+   
+2. CDN distributes assets to all edge nodes proactively.
+
+3. User requests asset → edge node always has it. (no origin fetch)
+
+4. Operator is responsible for pushing updates and managing expiry.
+
+**Best suited for**:
+
+- Small, well-defined content sets that change infrequently.
+- Assets requiring guaranteed availability regardless of origin health.
+- Large file distribution - software releases, game patches, firmware updates.
+- Content that can be precomputed and uploaded ahead of demand.
+
+**Examples**: Akamai NetStorage, AWS CloudFront with S3 origin pre-loaded, traditional media distribution networks.
