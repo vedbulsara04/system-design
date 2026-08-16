@@ -306,3 +306,70 @@ When a request passes through multiple components, the topology of those compone
    - **Minimize** the no. of sequential dependencies in the critical path.
    - **Replicate** each component in the critical path in parallel (redundancy).
    - **Isolate failures**: a failing non-critical component should not bring down the critical path.
+
+---
+
+## *Background Jobs*
+
+Background jobs are processing units that execute outside the request-response cycle asynchronously, without blocking the client.
+
+They handle workloads where immediate response is not required or where processing time exceeds acceptable request latency.
+
+**When to use background jobs**:
+
+- Processing time exceeds acceptable synchronous latency. (ex: video encoding, PDF generation, ML inference)
+- Work can be deferred without impacting user experience. (ex: sending emails, pushing notifications)
+- Workload is periodic and not user-initiated. (ex: billing cycles, report generation)
+- Decoupling producer throughput from consumer throughput is required. (ex: smoothing traffic spikes via queue buffering)
+
+
+### ` Trigger Mechanisms `
+
+#### **1. Event-Driven**
+
+Jobs are triggered by a specific event occuring in the system, like a message arriving on a queue, a record being written to a database, a file being uploaded to object storage.
+
+   **Mechanism**:
+  - Producer emits an event (message, signal, record).
+  - Event broker (queue or stream) holds the event.
+  - Consumer (background worker) picks it up and processes it asynchronously.
+
+   ```
+   Producer -> [Event Queue / Stream] -> Worker Process
+                 (Kafka, RabbitMQ,           (processes independently
+                  SQS, Redis Streams)          of original request)
+   ```
+
+   **Examples**:
+   Order placed -> trigger invoice generation; File uploaded -> trigger transcoding; User registered -> trigger welcome email.
+
+#### **2. Schedule-Driven**:
+
+Jobs are triggered by time, i.e. a fixed schedule (cron expression) or a regular interval regardless of system events.
+
+   **Mechanism**:
+   - A scheduler (cron daemon, job scheduler) fires the job at the configured time.
+   - Job runs against the current state of the system at that moment.
+
+   ```
+   Cron Expression:  0 2 * * *   (every day at 02:00)
+      |
+      ▼
+   Job Executor -> [Process] -> Write results to DB / storage
+   ```
+
+   **Examples**: Nightly database aggregations, weekly report generation, daily cache warming, periodic data cleanup / TTL expiry.
+
+   ***Returning Results***:
+
+   Background jobs execute asynchronously i.e. the client does not wait. Several patterns handle result delivery:
+
+   | Pattern | 	Mechanism | 	Use Case |
+| --- | --- | --- |
+| Polling | Client periodically queries a status endpoint until job is complete | Simple; works with any client |
+| Webhook / Callback | Job posts result to a pre-registered client URL on completion | Push-based; efficient; client must expose endpoint |
+| WebSocket / SSE | Persistent connection; server pushes result to client when ready | Real-time UX without polling overhead |
+| Shared storage | Job writes result to DB or object store; client reads when ready | Decoupled; works across services |
+| Message queue | Job publishes result event; client consumes from its own queue | Fully async; used in service-to-service flows |
+
+---
