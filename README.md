@@ -187,7 +187,7 @@ After a write completes, every subsequent read from any node in the system refle
 
 They are architectural strategies to ensure a system remains operational under node failure. The 2 primary mechanisms are: Fail-Over and Replication.
 
-#### **1. Fail-Over**: 
+#### **1. Fail-Over**
 
 It is the mechanism of automatically switching traffic to a standby node when the active node fails. A heartbeat signal is continuously sent between active and passive nodes to detect failure.
    
@@ -205,7 +205,7 @@ It is the mechanism of automatically switching traffic to a standby node when th
          - All traffic is rerouted to the surviving node.
          - No promotion required, the other node is already active.
 
-#### **2. Replication**: 
+#### **2. Replication**
 
 It is the mechanism of copying data across multiple nodes to ensure durability and read scalability.
    
@@ -311,9 +311,7 @@ When a request passes through multiple components, the topology of those compone
 
 ## *Background Jobs*
 
-Background jobs are processing units that execute outside the request-response cycle asynchronously, without blocking the client.
-
-They handle workloads where immediate response is not required or where processing time exceeds acceptable request latency.
+Background jobs are processing units that execute outside the request-response cycle asynchronously, without blocking the client. They handle workloads where immediate response is not required or where processing time exceeds acceptable request latency.
 
 **When to use background jobs**:
 
@@ -343,7 +341,7 @@ Jobs are triggered by a specific event occuring in the system, like a message ar
    **Examples**:
    Order placed -> trigger invoice generation; File uploaded -> trigger transcoding; User registered -> trigger welcome email.
 
-#### **2. Schedule-Driven**:
+#### **2. Schedule-Driven**
 
 Jobs are triggered by time, i.e. a fixed schedule (cron expression) or a regular interval regardless of system events.
 
@@ -373,3 +371,88 @@ Jobs are triggered by time, i.e. a fixed schedule (cron expression) or a regular
 | Message queue | Job publishes result event; client consumes from its own queue | Fully async; used in service-to-service flows |
 
 ---
+
+## *Domain Name System*
+
+DNS is the distributed hierarchical naming system that translates human-readable domain names into IP addresses. It is the first step in virtually every network request and operates as a globally distributed, eventually consistent database.
+
+### ` Core Function `
+
+```
+Client requests "www.example.com"
+         │
+         ▼
+DNS Resolution -> Returns -> 93.184.216.34 (IPv4) or 2606:2800:220:1:248:1893:25c8:1946 (IPv6)
+         │
+         ▼
+Client opens TCP connection to resolved IP
+
+```
+
+Without DNS, every client would need to know the IP address of every server, DNS decouples the human-facing name from the underlying infrastructure IP, allowing IPs to change without affecting clients.
+
+### ` DNS Hierarchy `
+
+DNS is organized as an inverted tree, with resolution delegated downard through levels:
+
+```
+                        . (Root)
+                        │
+          ┌─────────────┼──────────────┐
+         .com          .org           .net        <- Top-Level Domains (TLD)
+          │
+     example.com                                  <- Second-Level Domain
+          │
+    www.example.com                               <- Subdomain
+```
+
+### ` Resolution Process `
+
+DNS resolution involves up to four server types, each with a distinct role:
+
+| Server | Role |
+| --- | --- |
+| DNS Resolver (Recursive Resolver) | Client-facing; performs the full lookup on behalf of the client; caches results |
+| Root Name Server | Directs resolver to the correct TLD server |
+| TLD Name Server | Directs resolver to the authoritative name server for the domain |
+| Authoritative Name Server | Holds the actual DNS records; returns the final answer |
+
+### ` TTL - Time To Live `
+
+Every DNS record carries a TTL value in seconds - the duration for which resolvers and clients may cache the record before re-querying.
+
+```
+example.com.   300   IN   A   93.184.216.34
+                │
+                └──  TTL = 300 seconds (5 minutes)
+```
+
+#### **TTL tradeoffs**:
+
+| TTL | Effect |
+| --- | --- |
+| High TTL (hours/days) | Fewer DNS queries; lower DNS infrastructure load; stale records persist longer after changes |
+| Low TTL (seconds/minutes) | Changes propagate faster; higher query volume to authoritative servers |
+
+
+### ` DNS Caching Layers `
+
+A DNS record is cached at multiple layers before expiry:
+
+```
+Browser cache          →  shortest TTL, per-tab or per-session
+OS resolver cache      →  /etc/hosts checked first; then OS DNS cache
+ISP / Corporate DNS    →  shared cache across many clients
+Recursive Resolver     →  upstream cache (8.8.8.8, 1.1.1.1)
+```
+
+> `/etc/hosts` file is checked before any DNS query, static entries here always take precedence. Used in local development and container networking.
+
+### ` DNS and Eventual Consistency `
+
+DNS is a canonical example of an eventually consistent system:
+
+- Changes to DNS records propagate asynchronously across the global resolver network.
+- Propagation time is bounded by TTL - resolvers hold cached records until TTL expires.
+- During propagation, different clients may resolve the same domain to different IPs.
+- No global synchronization - by design, for scalability.
