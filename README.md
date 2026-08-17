@@ -545,3 +545,18 @@ In a Push CDN, content is explicitly uploaded to the CDN by the operator before 
 - Content that can be precomputed and uploaded ahead of demand.
 
 **Examples**: Akamai NetStorage, AWS CloudFront with S3 origin pre-loaded, traditional media distribution networks.
+
+## **Load Balancers**
+
+A load balancer is a component that distributes incoming traffic across a pool of backend servers to maximize throughput, minimze legacy, and prevent any single server from becoming a bottleneck or single point of failure.
+
+### ` Load Balancer v/s Reverse Proxy `
+
+| Property | Load Balancer | Reverse Proxy |
+| --- | --- | --- |
+| Primary function | Distribute traffic across multiple backend instances | Sit in front of one or more servers; mediate all client request |
+| Requires multiple backends? | Yes - meaningless with one backend | No - useful even with a single backend |
+| Additional features | Health checking, session persistence, scaling | SSL termination, caching, compression, authentication, WAP |
+| Scope | Traffic distribution | Request mediation and transformation |
+| Relationship | A load balancer is a specialized reverse proxy | A reverse proxy is not necessarily a load balancer |
+
