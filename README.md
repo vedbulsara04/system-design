@@ -560,3 +560,28 @@ A load balancer is a component that distributes incoming traffic across a pool o
 | Scope | Traffic distribution | Request mediation and transformation |
 | Relationship | A load balancer is a specialized reverse proxy | A reverse proxy is not necessarily a load balancer |
 
+### ` Load Balancing Alogirthms `
+
+The algorithm determines which backend server receives each incoming request.
+
+#### **Static Algorithms**
+
+Do not consider current server state - routing decisions are made without runtime feedback.
+
+| Algorithm | Mechanism | Best for |
+| --- | --- | --- |
+| Round Robin | Requests distributed sequentially across servers in rotation | Homogeneous servers, uniform request cost |
+| Weighted Round Robin | Same as round robin but servers receive traffic proportional to assigned weight | Heterogeneous servers with different capacities |
+| IP Hash | Client IP hashed to consistently route to the same server | Session affinity without server-side session sharing |
+| Random | Server selected randomly per request | Simple, low-overhead distribution |
+
+#### **Dynamic Algorithms**
+
+Consider real-time server state when making routing decisions
+
+| Algorithm | Mechanism | Best for |
+| --- | --- | --- |
+| Least Connections | Routes to server with fewest active connections | Variable request duration (long-polling, streaming) |
+| Weighted Least Connections | Least connections adjusted by server capacity weight | Heterogeneous pool with variable request duration |
+| Least Response Time | Routes to server with lowest current response latency | Latency-sensitive workloads |
+| Resource Based | Routes based on actual CPU/memory metrics reported by servers | Compute-intensive, resource-variable workloads. |
